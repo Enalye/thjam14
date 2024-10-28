@@ -1,0 +1,425 @@
+import {
+    "input.gr"
+    "audio.gr"
+    "font.gr"
+}
+
+var isAlive = true;
+
+event app {
+    setupInput();
+    loop yield {
+        isAlive = true;
+        @World.clear();
+        run();
+    }
+}
+
+func createLowerLayer() (Scene) {
+    var scene = @Scene;
+    scene.setSystemEntityUpdate("linear");
+    scene.setSystemEntityRender("linear");
+    @World.addScene(scene);
+
+    return scene;
+}
+
+func createUpperLayer() (Scene) {
+    var scene = @Scene;
+    scene.setSystemEntityUpdate("linear");
+    scene.setSystemEntityRender("linear");
+    scene.addSystemUpdate("lighting");
+    scene.addSystemRenderLate("lighting");
+    scene.setGlobalIllumination(0f);
+    @World.addScene(scene);
+    return scene;
+}
+
+func createMiddleLayer() (Scene) {
+    var scene = @Scene;
+    
+    scene.setSystemEntityUpdate("recursive");
+    scene.setSystemEntityRender("recursive");
+
+    //scene.addSystemUpdate("grid");
+    scene.addSystemUpdateLate("audio");
+    scene.addSystemUpdateLate("particle");
+
+    scene.addSystemRender("particle");
+    scene.addSystemRenderLate("particle");
+    
+    @World.addScene(scene);
+
+    return scene;
+}
+
+var holdLantern = false;
+var danger = 0f;
+
+func ui() {
+    var font = initFont(2);
+    var label = @Label("Arrows", font);
+    label.position = @Vec2f(10f, 10f);
+    label.color = @Color.white;
+    @UI.add(label);
+}
+
+func run() {
+    var lowerLayer = createLowerLayer();
+    var scene = createMiddleLayer();
+    var upperLayer = createUpperLayer();
+    var player = @Entity(scene);
+    @Camera.zoom(1f, 10, Spline.sineInOut);
+    @Camera.rumble(0f);
+
+    //ui();
+
+    var layer0 = @Entity(lowerLayer);
+    var map = @Tilemap("test");
+    layer0.image = map;
+
+    @Theme.get().background = @Color.black;
+
+    var anims = [
+        @Animation("kyouko.up"),
+        @Animation("kyouko.down"),
+        @Animation("kyouko.left"),
+        @Animation("kyouko.right"),
+        @Animation("kyouko.lantern.up"),
+        @Animation("kyouko.lantern.down"),
+        @Animation("kyouko.lantern.left"),
+        @Animation("kyouko.lantern.right")
+    ];
+    anims[2].flipX = true;
+    anims[2 + 4].flipX = true;
+    player.image = anims[1];
+
+    var stepsSfx = [[
+        @Sound("step-concrete-1"),
+        @Sound("step-concrete-2"),
+        @Sound("step-concrete-3"),
+        @Sound("step-concrete-4")
+    ],
+    [
+        @Sound("step-wood-1"),
+        @Sound("step-wood-2"),
+        @Sound("step-wood-3"),
+        @Sound("step-wood-4")
+    ],
+    [
+        @Sound("step-grass-1"),
+        @Sound("step-grass-2"),
+        @Sound("step-grass-3"),
+        @Sound("step-grass-4")
+    ],
+    [
+        @Sound("step-dirt-1"),
+        @Sound("step-dirt-2"),
+        @Sound("step-dirt-3"),
+        @Sound("step-dirt-4")
+    ]];
+    var stepCount = 10;
+    
+
+    /*loop(10) {
+        spawnObstacle(scene, @Vec2f(rand(-500, 500), rand(-500, 500)));
+    }*/
+
+    var spacing = 80f;
+    for(x, 0 -> 30) {
+        for(y, 0 -> 30) {
+            var posX, posY = x * spacing + rand(-50f, 50f), y * spacing + rand(-50f, 50f);
+            spawnTree(lowerLayer, scene, upperLayer, @Vec2f(posX - 200f, posY - 200f));
+        }
+    }
+
+    pingAction(player);
+    lanternLogic(player, upperLayer);
+    heartbeat();
+    kogasa(scene, player);
+
+    loop yield {
+        if(!isAlive) {
+            return;
+        }
+        var dir = @Input.getActionVector("left", "right", "up", "down");
+
+        var animOffset = 0;
+        if(holdLantern) {
+            animOffset = 4;
+        }
+
+        if(dir.lengthSquared() > 0f) {
+            loop(i, 8) {
+                anims[i].resume();
+                anims[i].update();
+            }
+
+            var x, y = ((player.position + map.mapSize / 2f) / map.tileSize).xy;
+            var tileId = map.getTile(x as<int>, y as<int>);
+
+            if(stepCount <= 0) {
+                if(tileId >= 0 && tileId <= 4) {
+                    play(stepsSfx[tileId, rand(0, 3)]);
+                }
+                stepCount = 30;
+            }
+            stepCount --;
+
+            if(abs(dir.x) >= abs(dir.y)) {
+                if(dir.x > 0) {
+                    player.image = anims[3 + animOffset];
+                }
+                else {
+                    player.image = anims[2 + animOffset];
+                }
+            }
+            else {
+                if(dir.y > 0) {
+                    player.image = anims[1 + animOffset];
+                }
+                else {
+                    player.image = anims[0 + animOffset];
+                }
+            }
+            player.position += dir.normalized() * 0.5f;
+        }
+        else {
+            loop(i, 8) {
+                anims[i].stop();
+            }
+            stepCount = 10;
+        }
+
+        @Camera.setPosition(player.position);
+    }
+}
+
+task lanternLogic(player: Entity, scene: Scene) {
+    var lightEntity = @Entity(scene);
+    var plight = @PointLight(@Vec2f(0f, 0f), @Vec2f(150f, 150f));
+    lightEntity.light = plight;
+    var t = 0f;
+    var lowColor = @HSLColor(17f, 0.77f, 0.51f);
+    var highColor = @HSLColor(44f, 1f, 0.64f);
+
+    var onSfx = @Sound("lantern.on");
+    var offSfx = @Sound("lantern.off");
+    var fireSfx = @Music("lantern.fire");
+
+    var firePlayer = @MusicPlayer(fireSfx);
+    firePlayer.pause(0f);
+
+    plight.intensity = 0f;
+
+    task {
+        loop yield {
+            if(!isAlive) {
+                firePlayer.stop(0f);
+                die;
+            }
+            if(@Input.isActionActivated("lantern")) {
+                holdLantern = !holdLantern;
+                if(holdLantern) {
+                    onSfx.play();
+                    firePlayer.resume(0.5f);
+                }
+                else {
+                    offSfx.play();
+                    firePlayer.pause(0.5f);
+                }
+                wait(30);
+            }
+        }
+    }();
+
+    var lightOffTimer = 0;
+    var loc: Color = @Color.black;
+    var loi: float;
+    var los: float;
+
+    loop yield {
+        if(!isAlive) {
+            die;
+        }
+        if(holdLantern) {
+            var lowNoise, highNoise = noise(t) / 2f + 0.5f, noise((t + 100.177f) * 10f) / 2f + 0.5f;
+            plight.intensity = 0.2f + 0.5f * lowNoise + 0.15f * highNoise;
+            plight.color = @Color(lerp(lowColor, highColor, (lowNoise + highNoise) / 2f));
+            plight.size = @Vec2f.one * lerp(50f, 150f, (lowNoise + highNoise) / 2f);
+            lightOffTimer = 30;
+        }
+        else {
+            if(lightOffTimer == 30) {
+                loc = plight.color;
+                loi = plight.intensity;
+                los = plight.size.x;
+            }
+            if(lightOffTimer > 0) {
+                lightOffTimer --;
+                var lt = lightOffTimer / 30f;
+                plight.intensity = lerp(0f, loi, lt);
+                plight.color = lerp(@Color.black, loc, lt);
+                plight.size = @Vec2f.one * lerp(0f, los, lt);
+            }
+        }
+
+        t += 0.01f;
+
+        lightEntity.position = player.position;
+    }
+}
+
+task kogasa(scene: Scene, player: Entity) {
+    var anim = @Animation("kogasa");
+
+    var foe = @Entity(scene);
+    foe.position = @Vec2f(rand(0f, 200f), rand(0f, 200f));
+    foe.image = anim;
+    foe.tags ~= "echo";
+
+    var target = player.position;
+    var canMove = false;
+
+    loop yield {
+        var playerPos = player.position;
+        var foePos = foe.position;
+
+        var dist = playerPos.distance(foePos);
+        danger = 0f;
+        if(dist < 250f) {
+            danger = lerp(1f, 0f, dist / 250f);
+        }
+
+        if(holdLantern && dist < 200f) {
+            target = playerPos;
+            canMove = true;
+        }
+        if(canMove) {
+            var dir = target - foePos;
+            dir.normalize();
+            var speed = 0f;
+
+            if(danger < 0.25f) {
+                speed = 0.25f;
+            }
+            else if(danger < 0.7f) {
+                speed = 0.4f;
+            }
+            else if(danger <= 1f) {
+                speed = 0.8f;
+            }
+            foe.position += dir * speed;
+        }
+
+        if(dist < 10f) {
+            @Camera.shake(1f);
+            anim.start();
+            var frame = 0;
+            @Sound("roar").play();
+            holdLantern = true;
+            @Camera.zoom(4f, 30, Spline.sineInOut);
+            loop yield {
+                anim.update();
+
+                if(frame > 60) {
+                    
+                    isAlive = false;
+                    yield;
+                    die;
+                }
+                frame ++;
+            }
+        }
+    }
+}
+
+task heartbeat {
+    var sfx = [
+        @Music("heartbeat.slow"),
+        @Music("heartbeat.fast"),
+        @Music("heartbeat.danger")];
+
+    var bus: [AudioBus];
+    var gain: [AudioGain];
+
+    var mainBus = @AudioBus;
+    var mainGain = @AudioGain;
+    mainBus.addEffect(mainGain);
+
+    loop(i, 3) {
+        var b = @AudioBus;
+        var g = @AudioGain;
+        b.addEffect(g);
+        b.connectTo(mainBus);
+        bus ~= b;
+        gain ~= g;
+
+        g.volume = 0f;
+
+        var player = @MusicPlayer(sfx[i]);
+        b.play(player);
+    }
+
+
+    loop yield {
+        if(!isAlive) {
+            mainBus.disconnect();
+            die;
+        }
+        @Camera.rumble(danger);
+        mainGain.volume = clamp(danger * 4f, 0f, 1f);
+        if(danger <= 0f) {
+            loop(i, 3) gain[i].volume = lerp(gain[i].volume, 0f, 0.01f);
+        }
+        else if(danger <= 0.4f) {
+            gain[0].volume = lerp(gain[0].volume, 1f, 0.05f);
+            gain[1].volume = lerp(gain[1].volume, 0f, 0.01f);
+            gain[2].volume = lerp(gain[2].volume, 0f, 0.01f);
+        }
+        else if(danger <= 0.7f) {
+            gain[0].volume = lerp(gain[0].volume, 0f, 0.01f);
+            gain[1].volume = lerp(gain[1].volume, 1f, 0.05f);
+            gain[2].volume = lerp(gain[2].volume, 0f, 0.01f);
+        }
+        else if(danger <= 1f) {
+            gain[0].volume = lerp(gain[0].volume, 0f, 0.01f);
+            gain[1].volume = lerp(gain[1].volume, 0f, 0.01f);
+            gain[2].volume = lerp(gain[2].volume, 1f, 0.05f);
+        }
+    }
+}
+
+task pingAction(player: Entity) {
+    loop yield {
+        if(!isAlive) {
+            die;
+        }
+        if(@Input.isActionActivated("ping")) {
+            player.ping();
+            sleep(1000f);
+        }
+    }
+}
+
+func spawnObstacle(scene: Scene, pos: Vec2f) {
+    var entity = @Entity(scene);
+    var rect = @Rectangle.fill(20f, 20f);
+    rect.color = @Color.blue;
+    entity.image = rect;
+    entity.position = pos;
+    entity.tags ~= "echo";
+    entity.isVisible = false;
+}
+
+func spawnTree(ground: Scene, middle: Scene, upper: Scene, pos: Vec2f) {
+    var trunk = @Entity(ground);
+    trunk.image = @Sprite("tree.trunk");
+    trunk.position = pos;
+
+    //spawnObstacle(middle, pos);
+
+    var leafs = @Entity(upper);
+    leafs.image = @Sprite("tree.leafs");
+    leafs.position = pos + @Vec2f(0f, -24f);
+}

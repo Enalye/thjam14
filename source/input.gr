@@ -1,0 +1,22 @@
+export func setupInput() {
+    @Input.addAction("up");
+    @Input.addAction("down");
+    @Input.addAction("left");
+    @Input.addAction("right");
+    @Input.addAction("ping");
+    @Input.addAction("lantern");
+    
+    @Input.addActionEvent("up", @InputEvent.keyButton(KeyButton.up, KeyState.pressed));
+    @Input.addActionEvent("down", @InputEvent.keyButton(KeyButton.down, KeyState.pressed));
+    @Input.addActionEvent("left", @InputEvent.keyButton(KeyButton.left, KeyState.pressed));
+    @Input.addActionEvent("right", @InputEvent.keyButton(KeyButton.right, KeyState.pressed));
+    @Input.addActionEvent("ping", @InputEvent.keyButton(KeyButton.x, KeyState.down));
+    @Input.addActionEvent("lantern", @InputEvent.keyButton(KeyButton.z, KeyState.down));
+
+    @Input.addActionEvent("up", @InputEvent.controllerButton(ControllerButton.up, KeyState.pressed));
+    @Input.addActionEvent("down", @InputEvent.controllerButton(ControllerButton.down, KeyState.pressed));
+    @Input.addActionEvent("left", @InputEvent.controllerButton(ControllerButton.left, KeyState.pressed));
+    @Input.addActionEvent("right", @InputEvent.controllerButton(ControllerButton.right, KeyState.pressed));
+    @Input.addActionEvent("ping", @InputEvent.controllerButton(ControllerButton.b, KeyState.down));
+    @Input.addActionEvent("lantern", @InputEvent.controllerButton(ControllerButton.a, KeyState.down));
+}

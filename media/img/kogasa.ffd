@@ -1,0 +1,14 @@
+texture "kogasa" {
+    file "kogasa.png"
+}
+
+animation "kogasa" {
+    texture "kogasa"
+    clip 0 0 32 32
+    frameTime 15
+    frames [0 1 2]
+    repeat false
+    lines 1
+    columns 3
+    margin 0 0
+}

@@ -1,0 +1,78 @@
+sound "step-wood-1" {
+    file "step-wood.ogg"
+    volume 1
+}
+
+sound "step-wood-2" {
+    file "step-wood-2.ogg"
+    volume 1
+}
+
+sound "step-wood-3" {
+    file "step-wood-3.ogg"
+    volume 1
+}
+
+sound "step-wood-4" {
+    file "step-wood-4.ogg"
+    volume 1
+}
+
+sound "step-concrete-1" {
+    file "step-concrete.ogg"
+    volume 1
+}
+
+sound "step-concrete-2" {
+    file "step-concrete-2.ogg"
+    volume 1
+}
+
+sound "step-concrete-3" {
+    file "step-concrete-3.ogg"
+    volume 1
+}
+
+sound "step-concrete-4" {
+    file "step-concrete-4.ogg"
+    volume 1
+}
+
+sound "step-grass-1" {
+    file "step-grass.ogg"
+    volume 1
+}
+
+sound "step-grass-2" {
+    file "step-grass-2.ogg"
+    volume 1
+}
+
+sound "step-grass-3" {
+    file "step-grass-3.ogg"
+    volume 1
+}
+
+sound "step-grass-4" {
+    file "step-grass-4.ogg"
+    volume 1
+}
+sound "step-dirt-1" {
+    file "step-dirt.ogg"
+    volume 1
+}
+
+sound "step-dirt-2" {
+    file "step-dirt-2.ogg"
+    volume 1
+}
+
+sound "step-dirt-3" {
+    file "step-dirt-3.ogg"
+    volume 1
+}
+
+sound "step-dirt-4" {
+    file "step-dirt-4.ogg"
+    volume 1
+}

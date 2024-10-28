@@ -1,0 +1,9 @@
+sound "ping" {
+    file "ping.wav"
+    volume 1
+}
+
+sound "roar" {
+    file "roar.wav"
+    volume 1
+}

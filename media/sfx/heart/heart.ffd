@@ -1,0 +1,14 @@
+music "heartbeat.slow" {
+    file "slow.wav"
+    volume 1.0
+}
+
+music "heartbeat.fast" {
+    file "fast.wav"
+    volume 1.0
+}
+
+music "heartbeat.danger" {
+    file "danger.wav"
+    volume 1.0
+}

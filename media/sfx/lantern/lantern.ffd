@@ -1,0 +1,14 @@
+sound "lantern.on" {
+    file "on.wav"
+    volume 1.0
+}
+
+sound "lantern.off" {
+    file "off.wav"
+    volume 1.0
+}
+
+music "lantern.fire" {
+    file "fire.wav"
+    volume 1.0
+}

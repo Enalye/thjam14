@@ -1,0 +1,84 @@
+texture "kyouko" {
+    file "kyouko.png"
+}
+animation "kyouko.up" {
+    texture "kyouko"
+    clip 0 0 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.left" {
+    texture "kyouko"
+    clip 0 32 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.right" {
+    texture "kyouko"
+    clip 0 32 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.down" {
+    texture "kyouko"
+    clip 0 64 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+
+animation "kyouko.lantern.up" {
+    texture "kyouko"
+    clip 96 0 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.lantern.left" {
+    texture "kyouko"
+    clip 96 32 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.lantern.right" {
+    texture "kyouko"
+    clip 96 32 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}
+animation "kyouko.lantern.down" {
+    texture "kyouko"
+    clip 96 64 32 32
+    frameTime 15
+    frames [0 1 0 2]
+    repeat true
+    lines 1
+    columns 3
+    margin 0 0
+}

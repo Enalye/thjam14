@@ -1,0 +1,11 @@
+texture "misc" {
+    file "misc.png"
+}
+sprite "tree.trunk" {
+    texture "misc"
+    clip 54 30 19 18
+}
+sprite "tree.leafs" {
+    texture "misc"
+    clip 3 0 42 37
+}

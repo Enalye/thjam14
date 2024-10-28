@@ -1,0 +1,10 @@
+default "app"
+config "app" {
+    source "app.gr"
+    media "img" true
+    media "sfx" true
+    window {
+        size 640 360
+        title "thjam14"
+    }
+}
